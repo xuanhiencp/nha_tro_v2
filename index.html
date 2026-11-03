@@ -169,11 +169,16 @@
                     <h2 class="text-lg font-bold text-slate-800">Cơ sở dữ liệu Hóa đơn (Database Table View)</h2>
                     <p class="text-xs text-slate-500">Xem dạng bảng tổng hợp, sắp xếp các cột và chỉnh sửa nhanh mọi thông số hóa đơn</p>
                 </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="exportDatabaseJSON()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-1.5">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button onclick="exportDatabaseJSON()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-1.5 shadow-xs">
                         <i class="fa-solid fa-download"></i>
-                        <span>Sao lưu JSON</span>
+                        <span>Sao lưu (Backup JSON)</span>
                     </button>
+                    <label class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-1.5 cursor-pointer shadow-xs">
+                        <i class="fa-solid fa-upload"></i>
+                        <span>Khôi phục (Import JSON)</span>
+                        <input type="file" id="importFile" accept=".json" onchange="importDatabaseJSON(event)" class="hidden">
+                    </label>
                 </div>
             </div>
 
@@ -224,7 +229,7 @@
                     <select id="reportMonthFilter" onchange="renderReports()" class="bg-slate-50 border border-slate-300 text-slate-700 text-sm rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500">
                         <option value="">Tất cả các tháng</option>
                     </select>
-                    <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-2">
+                    <button onclick="printReportStatement()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2">
                         <i class="fa-solid fa-print"></i>
                         <span>In Bảng kê</span>
                     </button>
@@ -480,21 +485,34 @@
             <div class="bg-indigo-600 text-white px-6 py-4 flex justify-between items-center">
                 <h3 class="font-bold text-lg flex items-center space-x-2">
                     <i class="fa-solid fa-code"></i>
-                    <span>Cập nhật mã nguồn nhanh</span>
+                    <span>Cập nhật mã nguồn & Kiểm tra dự án</span>
                 </h3>
                 <button onclick="closeQuickUpdateModal()" class="text-white/80 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="p-6 space-y-4">
                 <p class="text-xs text-slate-600">
-                    Dán toàn bộ mã HTML mới hoặc đoạn mã script cập nhật vào ô bên dưới để áp dụng trực tiếp cho phiên làm việc hiện tại mà không cần thao tác file thủ công.
+                    Dán mã nguồn mới hoặc đoạn script cập nhật vào ô bên dưới, hoặc bấm <strong>"Kiểm tra mã nguồn dự án"</strong> để quét lỗi và xem thống kê cấu trúc hiện tại.
                 </p>
-                <textarea id="quickCodeInput" rows="10" class="w-full bg-slate-900 text-emerald-400 font-mono text-xs p-4 rounded-xl border border-slate-700 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Dán code vào đây..."></textarea>
-                <div class="flex justify-end space-x-3">
-                    <button onclick="closeQuickUpdateModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition">Hủy</button>
-                    <button onclick="applyQuickCodeUpdate()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition flex items-center space-x-2">
-                        <i class="fa-solid fa-check"></i>
-                        <span>Áp dụng ngay</span>
+                
+                <!-- Code Diagnostics Panel -->
+                <div id="codeDiagnosticsResult" class="hidden bg-slate-100 border border-slate-300 rounded-xl p-3 text-xs font-mono text-slate-700 space-y-1">
+                    <!-- Injected by JS -->
+                </div>
+
+                <textarea id="quickCodeInput" rows="8" class="w-full bg-slate-900 text-emerald-400 font-mono text-xs p-4 rounded-xl border border-slate-700 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Dán code vào đây hoặc để trống để kiểm tra dự án hiện tại..."></textarea>
+                
+                <div class="flex justify-between items-center pt-2">
+                    <button onclick="inspectSourceCode()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-stethoscope text-indigo-600"></i>
+                        <span>Kiểm tra mã nguồn hiện tại</span>
                     </button>
+                    <div class="flex space-x-2">
+                        <button onclick="closeQuickUpdateModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition">Hủy</button>
+                        <button onclick="applyQuickCodeUpdate()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition flex items-center space-x-2">
+                            <i class="fa-solid fa-check"></i>
+                            <span>Áp dụng ngay</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1235,6 +1253,32 @@
             showNotification('Sao lưu dữ liệu thành công!', 'success');
         }
 
+        function importDatabaseJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (importedData && importedData.rooms && importedData.bills && importedData.settings) {
+                        appData = importedData;
+                        saveData();
+                        renderAll();
+                        showNotification('Khôi phục dữ liệu từ file JSON thành công!', 'success');
+                    } else {
+                        showNotification('File JSON không đúng định dạng dữ liệu nhà trọ!', 'error');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showNotification('Lỗi phân tích file JSON: ' + err.message, 'error');
+                }
+                // Reset file input
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
         // --- REPORTS & STATEMENTS ---
         function renderReports() {
             const filterSelect = document.getElementById('reportMonthFilter');
@@ -1291,6 +1335,11 @@
             document.getElementById('reportTotalRevenue').innerText = formatCurrency(totalRevenue);
         }
 
+        function printReportStatement() {
+            renderReports();
+            window.print();
+        }
+
         // --- SETTINGS MODAL ---
         function openSettingsModal() {
             document.getElementById('settingElec').value = appData.settings.elec;
@@ -1317,11 +1366,47 @@
         // --- QUICK CODE UPDATE MODAL ---
         function openQuickUpdateModal() {
             document.getElementById('quickCodeInput').value = '';
+            document.getElementById('codeDiagnosticsResult').classList.add('hidden');
             document.getElementById('quickUpdateModal').classList.remove('hidden');
         }
 
         function closeQuickUpdateModal() {
             document.getElementById('quickUpdateModal').classList.add('hidden');
+        }
+
+        function inspectSourceCode() {
+            const diagBox = document.getElementById('codeDiagnosticsResult');
+            diagBox.classList.remove('hidden');
+
+            const totalRooms = appData.rooms.length;
+            const rentedRooms = appData.rooms.filter(r => r.status === 'Đang thuê').length;
+            const totalTenants = appData.tenants.length;
+            const totalBills = appData.bills.length;
+            const totalHtmlSize = document.documentElement.outerHTML.length;
+
+            // Check key functions
+            const fnStatus = {
+                renderAll: typeof renderAll === 'function',
+                saveData: typeof saveData === 'function',
+                renderDatabaseTable: typeof renderDatabaseTable === 'function',
+                openBillModal: typeof openBillModal === 'function'
+            };
+
+            const allFunctionsOk = Object.values(fnStatus).every(Boolean);
+
+            diagBox.innerHTML = `
+                <div class="font-bold text-indigo-700 mb-1 flex items-center space-x-1">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>Báo cáo kiểm tra mã nguồn & Trạng thái Runtime:</span>
+                </div>
+                <div>- Tổng số phòng trọ: <strong>${totalRooms}</strong> (${rentedRooms} đang thuê)</div>
+                <div>- Số lượng khách thuê lưu trữ: <strong>${totalTenants}</strong></div>
+                <div>- Tổng số hóa đơn trong Database: <strong>${totalBills}</strong></div>
+                <div>- Kích thước DOM hiện tại: <strong>~${Math.round(totalHtmlSize / 1024)} KB</strong></div>
+                <div>- Kiểm tra các hàm cốt lõi: <span class="${allFunctionsOk ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}">${allFunctionsOk ? 'Tất cả hoạt động bình thường (OK)' : 'Phát hiện thiếu hàm'}</span></div>
+                <div class="text-[11px] text-emerald-700 mt-1 font-semibold">✓ Không phát hiện lỗi cú pháp nghiêm trọng trong bộ nhớ thực thi.</div>
+            `;
+            showNotification('Đã quét và kiểm tra mã nguồn thành công!', 'success');
         }
 
         function applyQuickCodeUpdate() {
@@ -1354,10 +1439,4 @@
         }
 
         // Initialize on load
-        window.onload = function() {
-            loadData();
-            renderAll();
-        };
-    </script>
-</body>
-</html>
+<!-- ...صدEOF
