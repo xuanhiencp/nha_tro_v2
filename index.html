@@ -147,7 +147,7 @@
         <div class="flex justify-between items-center">
             <div>
                 <h2 class="text-xl font-bold text-gray-900">Database Quản lý Hóa đơn (Bảng dữ liệu)</h2>
-                <p class="text-sm text-gray-500">Bảng dữ liệu tập trung cho phép kiểm tra, chỉnh sửa nhanh mọi thông số hóa đơn.</p>
+                <p class="text-sm text-gray-500">Bảng dữ liệu tập trung cho phép kiểm tra, sắp xếp và chỉnh sửa nhanh mọi thông số hóa đơn.</p>
             </div>
             <div class="flex space-x-3">
                 <button onclick="copyPreviousMonthBills()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-medium shadow transition flex items-center space-x-2">
@@ -165,12 +165,24 @@
                     <table class="w-full text-left border-collapse min-w-[700px]">
                         <thead>
                             <tr class="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-gray-100">
-                                <th class="p-4">Tháng</th>
-                                <th class="p-4">Phòng</th>
-                                <th class="p-4 text-center">Điện (Mới - Cũ = Tiêu thụ)</th>
-                                <th class="p-4 text-center">Nước (Mới - Cũ = Tiêu thụ)</th>
-                                <th class="p-4 text-right">Tổng tiền</th>
-                                <th class="p-4 text-center">Trạng thái</th>
+                                <th class="p-4 cursor-pointer hover:bg-gray-100 transition" onclick="sortTable('month')">
+                                    Tháng <i class="fa-solid fa-sort text-gray-400 ml-1"></i>
+                                </th>
+                                <th class="p-4 cursor-pointer hover:bg-gray-100 transition" onclick="sortTable('room')">
+                                    Phòng <i class="fa-solid fa-sort text-gray-400 ml-1"></i>
+                                </th>
+                                <th class="p-4 text-center cursor-pointer hover:bg-gray-100 transition" onclick="sortTable('elec')">
+                                    Điện (Tiêu thụ) <i class="fa-solid fa-sort text-gray-400 ml-1"></i>
+                                </th>
+                                <th class="p-4 text-center cursor-pointer hover:bg-gray-100 transition" onclick="sortTable('water')">
+                                    Nước (Tiêu thụ) <i class="fa-solid fa-sort text-gray-400 ml-1"></i>
+                                </th>
+                                <th class="p-4 text-right cursor-pointer hover:bg-gray-100 transition" onclick="sortTable('total')">
+                                    Tổng tiền <i class="fa-solid fa-sort text-gray-400 ml-1"></i>
+                                </th>
+                                <th class="p-4 text-center cursor-pointer hover:bg-gray-100 transition" onclick="sortTable('status')">
+                                    Trạng thái <i class="fa-solid fa-sort text-gray-400 ml-1"></i>
+                                </th>
                                 <th class="p-4 text-right">Hành động</th>
                             </tr>
                         </thead>
@@ -393,7 +405,7 @@
                 </div>
                 <button onclick="closeModal('updateCodeModal')" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <p class="text-xs text-gray-500">Dán đoạn mã (HTML/JavaScript) hoặc bản cập nhật mới vào khung dưới đây để nạp trực tiếp vào phiên làm việc hoặc xuất bản bản cập nhật mà không cần tải lại toàn bộ file thủ công.</p>
+            <p class="text-xs text-gray-500">Dán đoạn mã HTML/JavaScript đầy đủ hoặc đoạn cập nhật vào đây. Hệ thống sẽ áp dụng và làm mới ứng dụng an toàn.</p>
             <div class="space-y-3">
                 <textarea id="quickCodeInput" rows="8" class="w-full font-mono text-xs border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Dán code mới vào đây..."></textarea>
                 <div class="flex justify-between items-center">
@@ -538,6 +550,54 @@
                 { id: '2', roomId: '5', month: 'Tháng 10/2026', elecOld: 200, elecNew: 270, waterOld: 22, waterNew: 28, status: 'Đã thanh toán' }
             ]
         };
+
+        // Sorting state tracking
+        let currentSortColumn = null;
+        let sortDirection = 1; // 1 for ascending, -1 for descending
+
+        function sortTable(column) {
+            if (currentSortColumn === column) {
+                sortDirection = -sortDirection; // Toggle direction
+            } else {
+                currentSortColumn = column;
+                sortDirection = 1;
+            }
+
+            appData.bills.sort((a, b) => {
+                let valA, valB;
+                const roomA = appData.rooms.find(r => r.id === a.roomId)?.name || '';
+                const roomB = appData.rooms.find(r => r.id === b.roomId)?.name || '';
+                const priceA = appData.rooms.find(r => r.id === a.roomId)?.price || 0;
+                const priceB = appData.rooms.find(r => r.id === b.roomId)?.price || 0;
+
+                if (column === 'month') {
+                    valA = a.month;
+                    valB = b.month;
+                    return valA.localeCompare(valB) * sortDirection;
+                } else if (column === 'room') {
+                    return roomA.localeCompare(roomB) * sortDirection;
+                } else if (column === 'elec') {
+                    valA = Math.max(0, a.elecNew - a.elecOld);
+                    valB = Math.max(0, b.elecNew - b.elecOld);
+                    return (valA - valB) * sortDirection;
+                } else if (column === 'water') {
+                    valA = Math.max(0, a.waterNew - a.waterOld);
+                    valB = Math.max(0, b.waterNew - b.waterOld);
+                    return (valA - valB) * sortDirection;
+                } else if (column === 'total') {
+                    valA = priceA + Math.max(0, a.elecNew - a.elecOld) * appData.settings.elec + Math.max(0, a.waterNew - a.waterOld) * appData.settings.water + (appData.settings.trash || 30000);
+                    valB = priceB + Math.max(0, b.elecNew - b.elecOld) * appData.settings.elec + Math.max(0, b.waterNew - b.waterOld) * appData.settings.water + (appData.settings.trash || 30000);
+                    return (valA - valB) * sortDirection;
+                } else if (column === 'status') {
+                    valA = a.status;
+                    valB = b.status;
+                    return valA.localeCompare(valB) * sortDirection;
+                }
+                return 0;
+            });
+
+            renderAll();
+        }
 
         // Ensure trash is always set to 30000 by default if missing
         if (!appData.settings.trash) {
@@ -1020,12 +1080,24 @@
                     document.open();
                     document.write(code);
                     document.close();
+                } else if (code.includes('function') || code.includes('appData')) {
+                    // Execute snippet in safe context and re-render
+                    const evalFunc = new Function(code);
+                    evalFunc();
+                    if (typeof renderAll === 'function') {
+                        renderAll();
+                    }
+                    closeModal('updateCodeModal');
+                    alert('Đã áp dụng đoạn mã JavaScript thành công!');
                 } else {
-                    // Execute script snippet or eval if safe js
-                    console.log('Custom update received:', code);
-                    alert('Đã nhận đoạn mã cập nhật. Hãy kiểm tra console hoặc tải xuống file index.html mới nhất!');
+                    // Try evaluating as general JS snippet
+                    eval(code);
+                    if (typeof renderAll === 'function') {
+                        renderAll();
+                    }
+                    closeModal('updateCodeModal');
+                    alert('Đã thực thi đoạn mã cập nhật thành công!');
                 }
-                closeModal('updateCodeModal');
             } catch (err) {
                 alert('Lỗi áp dụng mã nguồn: ' + err.message);
             }
