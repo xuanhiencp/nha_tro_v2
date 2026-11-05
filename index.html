@@ -13,8 +13,10 @@
         body { font-family: 'Inter', sans-serif; }
         @media print {
             .no-print { display: none !important; }
-            body { background: white !important; color: black !important; }
-            .print-container { box-shadow: none !important; border: none !important; padding: 0 !important; }
+            body { background: white !important; color: #1e293b !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .print-container { box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
+            .print-bg-indigo { background-color: #4f46e5 !important; color: white !important; }
+            .print-bg-slate { background-color: #f1f5f9 !important; }
         }
     </style>
 </head>
@@ -223,61 +225,113 @@
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-xl shadow-xs border border-slate-200 no-print">
                 <div>
                     <h2 class="text-lg font-bold text-slate-800">Bảng kê & Doanh thu</h2>
-                    <p class="text-xs text-slate-500">Thống kê chi tiết tài chính và in bảng kê theo thời gian</p>
+                    <p class="text-xs text-slate-500">Thống kê chi tiết tài chính và in bảng kê theo thời gian với giao diện chuyên nghiệp</p>
                 </div>
                 <div class="flex items-center gap-3">
                     <select id="reportMonthFilter" onchange="renderReports()" class="bg-slate-50 border border-slate-300 text-slate-700 text-sm rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500">
                         <option value="">Tất cả các tháng</option>
                     </select>
-                    <button onclick="printReportStatement()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2 cursor-pointer">
+                    <button onclick="printReportStatement()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2 cursor-pointer shadow-sm">
                         <i class="fa-solid fa-print"></i>
-                        <span>In Bảng kê</span>
+                        <span>In Bảng kê (Màu sắc chuẩn)</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Printable Statement Container -->
-            <div id="printableStatement" class="bg-white p-6 sm:p-8 rounded-xl shadow-xs border border-slate-200 space-y-6 print-container">
-                <div class="text-center border-b border-slate-200 pb-6">
-                    <h2 class="text-2xl font-bold text-slate-900 uppercase">BẢNG KÊ THU CHI NHÀ TRỌ</h2>
-                    <p id="reportPeriodTitle" class="text-sm text-slate-500 mt-1">Kỳ báo cáo: Toàn bộ thời gian</p>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                        <p class="text-xs text-slate-500 font-medium">Tổng tiền phòng</p>
-                        <h4 id="reportTotalRent" class="text-xl font-bold text-slate-800 mt-1">0 đ</h4>
+            <!-- Printable Statement Container with Professional Styled Colors -->
+            <div id="printableStatement" class="bg-white p-6 sm:p-10 rounded-2xl shadow-sm border border-slate-200 space-y-8 print-container">
+                <!-- Header Banner -->
+                <div class="bg-gradient-to-r from-indigo-700 to-indigo-900 text-white p-6 rounded-2xl shadow-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print-bg-indigo">
+                    <div>
+                        <div class="flex items-center space-x-2.5">
+                            <div class="bg-white/15 p-2 rounded-xl">
+                                <i class="fa-solid fa-house-chimney text-xl text-amber-300"></i>
+                            </div>
+                            <h2 class="text-2xl font-black uppercase tracking-wide">BẢNG KÊ THU CHI NHÀ TRỌ</h2>
+                        </div>
+                        <p class="text-indigo-200 text-xs mt-1">Báo cáo tài chính, chỉ số tiêu thụ điện nước & doanh thu chi tiết</p>
                     </div>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                        <p class="text-xs text-slate-500 font-medium">Tổng tiền Điện, Nước & Rác</p>
-                        <h4 id="reportTotalUtilities" class="text-xl font-bold text-indigo-600 mt-1">0 đ</h4>
-                    </div>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                        <p class="text-xs text-slate-500 font-medium">Tổng doanh thu thực tế</p>
-                        <h4 id="reportTotalRevenue" class="text-xl font-bold text-emerald-600 mt-1">0 đ</h4>
+                    <div class="text-right sm:text-right">
+                        <p id="reportPeriodTitle" class="text-sm font-bold text-amber-300 bg-white/10 px-3 py-1 rounded-lg inline-block">Kỳ báo cáo: Toàn bộ thời gian</p>
+                        <p class="text-xs text-indigo-200 mt-1">Ngày xuất: <span id="reportPrintDate">--/--/----</span></p>
                     </div>
                 </div>
 
-                <div>
-                    <h3 class="font-bold text-slate-800 mb-3 text-base">Chi tiết chỉ số & doanh thu theo phòng</h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse text-sm">
+                <!-- Summary KPI Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                    <div class="bg-gradient-to-br from-slate-50 to-blue-50/50 p-4 rounded-2xl border border-blue-100 shadow-xs print-bg-slate">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-blue-600 font-bold uppercase tracking-wider">Tổng tiền phòng</span>
+                            <div class="bg-blue-100 text-blue-700 p-2 rounded-xl text-xs"><i class="fa-solid fa-door-open"></i></div>
+                        </div>
+                        <h4 id="reportTotalRent" class="text-xl font-black text-slate-900 mt-2">0 đ</h4>
+                        <p class="text-[11px] text-slate-500 mt-1">Thu nhập cố định giá phòng</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-slate-50 to-indigo-50/50 p-4 rounded-2xl border border-indigo-100 shadow-xs print-bg-slate">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-indigo-600 font-bold uppercase tracking-wider">Tiện ích (Điện, Nước, Rác)</span>
+                            <div class="bg-indigo-100 text-indigo-700 p-2 rounded-xl text-xs"><i class="fa-solid fa-bolt"></i></div>
+                        </div>
+                        <h4 id="reportTotalUtilities" class="text-xl font-black text-indigo-600 mt-2">0 đ</h4>
+                        <p class="text-[11px] text-slate-500 mt-1">Tổng điện, nước, rác thực tế</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-slate-50 to-rose-50/50 p-4 rounded-2xl border border-rose-100 shadow-xs print-bg-slate">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-rose-600 font-bold uppercase tracking-wider">Tổng thu khác</span>
+                            <div class="bg-rose-100 text-rose-700 p-2 rounded-xl text-xs"><i class="fa-solid fa-receipt"></i></div>
+                        </div>
+                        <h4 id="reportTotalOther" class="text-xl font-black text-rose-600 mt-2">0 đ</h4>
+                        <p class="text-[11px] text-slate-500 mt-1">Phí phát sinh, sửa chữa</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-slate-50 to-emerald-50/50 p-4 rounded-2xl border border-emerald-100 shadow-xs print-bg-slate">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-emerald-600 font-bold uppercase tracking-wider">Tổng doanh thu</span>
+                            <div class="bg-emerald-100 text-emerald-700 p-2 rounded-xl text-xs"><i class="fa-solid fa-wallet"></i></div>
+                        </div>
+                        <h4 id="reportTotalRevenue" class="text-xl font-black text-emerald-600 mt-2">0 đ</h4>
+                        <p class="text-[11px] text-slate-500 mt-1">Tổng cộng mọi khoản thu</p>
+                    </div>
+                </div>
+
+                <!-- Detailed Table -->
+                <div class="space-y-3">
+                    <h3 class="font-bold text-slate-800 text-base flex items-center space-x-2">
+                        <i class="fa-solid fa-list-check text-indigo-600"></i>
+                        <span>Chi tiết chỉ số đo & Doanh thu từng phòng</span>
+                    </h3>
+                    <div class="overflow-x-auto rounded-xl border border-slate-200">
+                        <table class="w-full text-left border-collapse text-xs sm:text-sm">
                             <thead>
-                                <tr class="bg-slate-100 text-slate-700 uppercase text-xs font-semibold">
-                                    <th class="p-3 border border-slate-200">Tháng</th>
-                                    <th class="p-3 border border-slate-200">Phòng</th>
-                                    <th class="p-3 border border-slate-200">Chỉ số Điện (Mới - Cũ)</th>
-                                    <th class="p-3 border border-slate-200">Chỉ số Nước (Mới - Cũ)</th>
-                                    <th class="p-3 border border-slate-200">Tiền phòng</th>
-                                    <th class="p-3 border border-slate-200">Tiền Điện + Nước + Rác</th>
-                                    <th class="p-3 border border-slate-200">Tổng cộng</th>
-                                    <th class="p-3 border border-slate-200">Trạng thái</th>
+                                <tr class="bg-indigo-700 text-white uppercase text-xs font-semibold print-bg-indigo">
+                                    <th class="p-3 border-r border-indigo-600">Tháng</th>
+                                    <th class="p-3 border-r border-indigo-600">Phòng</th>
+                                    <th class="p-3 border-r border-indigo-600">⚡ Điện (Mới - Cũ)</th>
+                                    <th class="p-3 border-r border-indigo-600">💧 Nước (Mới - Cũ)</th>
+                                    <th class="p-3 border-r border-indigo-600">Tiền phòng</th>
+                                    <th class="p-3 border-r border-indigo-600">Điện+Nước+Rác</th>
+                                    <th class="p-3 border-r border-indigo-600">Thu khác</th>
+                                    <th class="p-3 border-r border-indigo-600">Tổng cộng</th>
+                                    <th class="p-3 text-center">Trạng thái</th>
                                 </tr>
                             </thead>
                             <tbody id="reportTableBody" class="divide-y divide-slate-200">
                                 <!-- Rendered by JS -->
                             </tbody>
                         </table>
+                    </div>
+                </div>
+
+                <!-- Footer Signatures -->
+                <div class="grid grid-cols-2 pt-12 text-center text-xs text-slate-600 page-break-inside-avoid">
+                    <div>
+                        <p class="font-bold uppercase text-slate-800">Người lập bảng kê</p>
+                        <p class="text-[11px] text-slate-400 mt-0.5">(Ký và ghi rõ họ tên)</p>
+                        <p class="mt-20 font-semibold text-slate-800">_________________________________</p>
+                    </div>
+                    <div>
+                        <p class="font-bold uppercase text-slate-800">Chủ nhà / Quản lý</p>
+                        <p class="text-[11px] text-slate-400 mt-0.5">(Ký và đóng dấu nếu có)</p>
+                        <p class="mt-20 font-semibold text-slate-800">_________________________________</p>
                     </div>
                 </div>
             </div>
@@ -435,12 +489,18 @@
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Trạng thái thanh toán</label>
-                    <select id="billStatus" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-                        <option value="Chưa thu">Chưa thu</option>
-                        <option value="Đã thu">Đã thu</option>
-                    </select>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Khoản thu khác (VNĐ)</label>
+                        <input type="number" id="billOtherFee" value="0" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Phí phát sinh, sửa chữa...">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Trạng thái thanh toán</label>
+                        <select id="billStatus" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                            <option value="Chưa thu">Chưa thu</option>
+                            <option value="Đã thu">Đã thu</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="flex justify-end space-x-3 pt-4 border-t border-slate-200">
@@ -898,7 +958,8 @@
                 const elecCost = elecUsage * appData.settings.elec;
                 const waterCost = waterUsage * appData.settings.water;
                 const trashCost = appData.settings.trash;
-                const total = roomPrice + elecCost + waterCost + trashCost;
+                const otherFee = Number(bill.otherFee || 0);
+                const total = roomPrice + elecCost + waterCost + trashCost + otherFee;
 
                 const card = document.createElement('div');
                 card.className = "bg-white rounded-xl p-5 border border-slate-200 shadow-xs space-y-4";
@@ -924,6 +985,7 @@
                         <div class="pl-2 text-slate-500 italic">💧 Nước: ${bill.waterNew} - ${bill.waterOld} = ${waterUsage} m³ * ${formatCurrency(appData.settings.water)}</div>
 
                         <div class="flex justify-between pt-1"><span>4. Tiền rác:</span> <span class="font-semibold">${formatCurrency(trashCost)}</span></div>
+                        ${otherFee > 0 ? `<div class="flex justify-between pt-1"><span>5. Thu khác:</span> <span class="font-semibold text-rose-600">${formatCurrency(otherFee)}</span></div>` : ''}
                     </div>
 
                     <div class="flex justify-between items-center pt-2 border-t border-slate-100">
@@ -971,12 +1033,14 @@
                     document.getElementById('billElecNew').value = bill.elecNew;
                     document.getElementById('billWaterOld').value = bill.waterOld;
                     document.getElementById('billWaterNew').value = bill.waterNew;
+                    document.getElementById('billOtherFee').value = bill.otherFee || 0;
                     document.getElementById('billStatus').value = bill.status;
                 }
             } else {
                 title.innerText = 'Tạo Hóa đơn mới';
                 const selectedRoomId = Number(roomSelect.value);
                 autoFillOldMeters(selectedRoomId);
+                document.getElementById('billOtherFee').value = 0;
             }
 
             modal.classList.remove('hidden');
@@ -1016,6 +1080,7 @@
             const elecNew = Number(document.getElementById('billElecNew').value) || 0;
             const waterOld = Number(document.getElementById('billWaterOld').value) || 0;
             const waterNew = Number(document.getElementById('billWaterNew').value) || 0;
+            const otherFee = Number(document.getElementById('billOtherFee').value) || 0;
             const status = document.getElementById('billStatus').value;
 
             if (elecNew < elecOld || waterNew < waterOld) {
@@ -1026,7 +1091,7 @@
             if (id) {
                 const idx = appData.bills.findIndex(b => Number(b.id) === Number(id));
                 if (idx !== -1) {
-                    appData.bills[idx] = { ...appData.bills[idx], roomId, month, elecOld, elecNew, waterOld, waterNew, status };
+                    appData.bills[idx] = { ...appData.bills[idx], roomId, month, elecOld, elecNew, waterOld, waterNew, otherFee, status };
                 }
             } else {
                 const newBill = {
@@ -1037,6 +1102,7 @@
                     elecNew,
                     waterOld,
                     waterNew,
+                    otherFee,
                     status
                 };
                 appData.bills.push(newBill);
@@ -1084,6 +1150,7 @@
                 elecNew: bill.elecNew,
                 waterOld: bill.waterNew,
                 waterNew: bill.waterNew,
+                otherFee: 0,
                 status: 'Chưa thu'
             };
 
@@ -1106,7 +1173,8 @@
             const elecCost = elecUsage * appData.settings.elec;
             const waterCost = waterUsage * appData.settings.water;
             const trashCost = appData.settings.trash;
-            const total = roomPrice + elecCost + waterCost + trashCost;
+            const otherFee = Number(bill.otherFee || 0);
+            const total = roomPrice + elecCost + waterCost + trashCost + otherFee;
 
             const content = document.getElementById('printableInvoiceContent');
             if (!content) return;
@@ -1115,11 +1183,27 @@
                     <h2 class="text-xl font-bold uppercase tracking-wider text-slate-900">HÓA ĐƠN THANH TOÁN TIỀN TRỌ</h2>
                     <p class="text-sm font-semibold text-indigo-600 mt-1">Tháng: ${bill.month}</p>
                 </div>
-                <div class="grid grid-cols-2 gap-4 text-sm text-slate-700">
-                    <div><strong>Phòng:</strong> ${room ? room.name : 'N/A'}</div>
-                    <div><strong>Khách thuê:</strong> ${tenant ? tenant.name : 'N/A'}</div>
+
+                <!-- 3D Styled Highlight Block with Red Bold Room Name and Status -->
+                <div class="bg-gradient-to-r from-slate-100 to-indigo-50/50 p-4 rounded-xl border border-indigo-200 shadow-md flex flex-wrap justify-between items-center gap-4">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs uppercase text-slate-500 font-bold">Phòng:</span>
+                        <div class="bg-white px-4 py-1.5 rounded-lg shadow-sm border border-slate-200">
+                            <span class="text-lg font-black text-rose-600 tracking-wide">${room ? room.name : 'N/A'}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs uppercase text-slate-500 font-bold">Trạng thái:</span>
+                        <span class="px-3 py-1 rounded-lg text-xs font-bold shadow-xs ${bill.status === 'Đã thu' ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white'}">
+                            ${bill.status}
+                        </span>
+                    </div>
+                    <div class="w-full text-xs text-slate-600">
+                        <strong>Khách thuê:</strong> ${tenant ? tenant.name : 'N/A'}
+                    </div>
                 </div>
-                <table class="w-full text-left border-collapse text-sm mt-4">
+
+                <table class="w-full text-left border-collapse text-sm mt-2">
                     <thead>
                         <tr class="bg-slate-100 text-slate-700 text-xs uppercase">
                             <th class="p-2.5 border border-slate-200">Khoản mục</th>
@@ -1153,6 +1237,13 @@
                             <td class="p-2.5 border border-slate-200 text-xs">-</td>
                             <td class="p-2.5 border border-slate-200 text-right font-semibold">${formatCurrency(trashCost)}</td>
                         </tr>
+                        ${otherFee > 0 ? `
+                        <tr>
+                            <td class="p-2.5 border border-slate-200 font-medium text-rose-600">Thu khác</td>
+                            <td class="p-2.5 border border-slate-200 text-xs">Phí phát sinh</td>
+                            <td class="p-2.5 border border-slate-200 text-xs">-</td>
+                            <td class="p-2.5 border border-slate-200 text-right font-semibold text-rose-600">${formatCurrency(otherFee)}</td>
+                        </tr>` : ''}
                     </tbody>
                 </table>
                 <div class="flex justify-between items-center pt-4 border-t-2 border-slate-200 text-base font-bold">
@@ -1193,7 +1284,8 @@
                 const elecCost = elecUsage * appData.settings.elec;
                 const waterCost = waterUsage * appData.settings.water;
                 const trashCost = appData.settings.trash;
-                const total = roomPrice + elecCost + waterCost + trashCost;
+                const otherFee = Number(bill.otherFee || 0);
+                const total = roomPrice + elecCost + waterCost + trashCost + otherFee;
 
                 return {
                     id: bill.id,
@@ -1205,6 +1297,7 @@
                     waterStr: `${bill.waterNew} - ${bill.waterOld} = ${waterUsage}`,
                     waterUsage: waterUsage,
                     trashCost: trashCost,
+                    otherFee: otherFee,
                     total: total,
                     status: bill.status
                 };
@@ -1304,10 +1397,17 @@
                 periodTitle.innerText = selectedMonth ? `Kỳ báo cáo tháng: ${selectedMonth}` : 'Kỳ báo cáo: Toàn bộ thời gian';
             }
 
+            const printDateEl = document.getElementById('reportPrintDate');
+            if (printDateEl) {
+                const now = new Date();
+                printDateEl.innerText = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+            }
+
             const filteredBills = selectedMonth ? appData.bills.filter(b => b.month === selectedMonth) : appData.bills;
 
             let totalRent = 0;
             let totalUtilities = 0;
+            let totalOther = 0;
             let totalRevenue = 0;
 
             const tbody = document.getElementById('reportTableBody');
@@ -1323,23 +1423,27 @@
                 const waterCost = waterUsage * appData.settings.water;
                 const trashCost = appData.settings.trash;
                 const utilitiesCost = elecCost + waterCost + trashCost;
-                const total = roomPrice + utilitiesCost;
+                const otherFee = Number(bill.otherFee || 0);
+                const total = roomPrice + utilitiesCost + otherFee;
 
                 totalRent += roomPrice;
                 totalUtilities += utilitiesCost;
+                totalOther += otherFee;
                 totalRevenue += total;
 
                 const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/80 transition";
                 tr.innerHTML = `
-                    <td class="p-3 border border-slate-200 font-semibold">${bill.month}</td>
-                    <td class="p-3 border border-slate-200 font-medium text-indigo-600">${room ? room.name : 'N/A'}</td>
-                    <td class="p-3 border border-slate-200 text-xs">${bill.elecNew} - ${bill.elecOld} = ${elecUsage} kWh</td>
-                    <td class="p-3 border border-slate-200 text-xs">${bill.waterNew} - ${bill.waterOld} = ${waterUsage} m³</td>
-                    <td class="p-3 border border-slate-200">${formatCurrency(roomPrice)}</td>
-                    <td class="p-3 border border-slate-200">${formatCurrency(utilitiesCost)}</td>
-                    <td class="p-3 border border-slate-200 font-bold text-slate-900">${formatCurrency(total)}</td>
-                    <td class="p-3 border border-slate-200">
-                        <span class="text-xs font-semibold px-2 py-0.5 rounded-md ${bill.status === 'Đã thu' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${bill.status}</span>
+                    <td class="p-3 border-r border-b border-slate-200 font-bold text-slate-800">${bill.month}</td>
+                    <td class="p-3 border-r border-b border-slate-200 font-bold text-indigo-700">${room ? room.name : 'N/A'}</td>
+                    <td class="p-3 border-r border-b border-slate-200 text-xs text-slate-700 font-medium">${bill.elecNew} - ${bill.elecOld} = <strong class="text-indigo-600">${elecUsage} kWh</strong></td>
+                    <td class="p-3 border-r border-b border-slate-200 text-xs text-slate-700 font-medium">${bill.waterNew} - ${bill.waterOld} = <strong class="text-blue-600">${waterUsage} m³</strong></td>
+                    <td class="p-3 border-r border-b border-slate-200 text-slate-700 font-medium">${formatCurrency(roomPrice)}</td>
+                    <td class="p-3 border-r border-b border-slate-200 text-indigo-700 font-semibold">${formatCurrency(utilitiesCost)}</td>
+                    <td class="p-3 border-r border-b border-slate-200 text-rose-600 font-semibold">${otherFee > 0 ? formatCurrency(otherFee) : '-'}</td>
+                    <td class="p-3 border-r border-b border-slate-200 font-black text-slate-900 bg-slate-50/50">${formatCurrency(total)}</td>
+                    <td class="p-3 border-b border-slate-200 text-center">
+                        <span class="text-xs font-bold px-2 py-0.5 rounded-full ${bill.status === 'Đã thu' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-amber-100 text-amber-800 border border-amber-200'}">${bill.status}</span>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -1347,6 +1451,7 @@
 
             document.getElementById('reportTotalRent').innerText = formatCurrency(totalRent);
             document.getElementById('reportTotalUtilities').innerText = formatCurrency(totalUtilities);
+            document.getElementById('reportTotalOther').innerText = formatCurrency(totalOther);
             document.getElementById('reportTotalRevenue').innerText = formatCurrency(totalRevenue);
         }
 
